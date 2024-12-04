@@ -1,0 +1,106 @@
+/* General container styling */
+body{
+  background: url('../assets/VR.gif') no-repeat center center;
+  background-size: cover;
+  height: 100vh;
+}
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  overflow: hidden;
+  position: relative; /* Add this to ensure absolutely positioned elements are contained */
+}
+
+/* Header styling */
+.header {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 1rem;
+  width: 100%;
+  background-color: rgba(51, 51, 51, 0.8); /* Semi-transparent background color */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  color: white; /* White text color */
+  z-index: 1; /* Ensure it sits above the background */
+}
+
+/* Styling for the logo */
+.logo {
+  height: 50px;
+  margin-right: 1rem;
+}
+
+/* Styling for the heading container */
+.heading-container {
+  display: flex;
+  flex: 1; /* Take remaining space */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+}
+
+.heading-container h1 {
+  font-size: 2rem;
+  color: white; /* Whitish text color */
+  margin: 0; /* Remove default margin */
+}
+
+/* Main section styling */
+.main {
+  display: flex;
+  flex-direction: column;
+  margin-top: 150px;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  text-align: center;
+  position: relative; /* Ensure it sits above the background */
+}
+
+.main-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  position: relative; /* Ensure it sits above the background */
+}
+
+.main-container button {
+  width: 100%;
+  background-color: #5e538b;
+}
+
+.main .thumbnail {
+  cursor: pointer;
+  width: 200px;
+  opacity: 70%;
+  object-fit: cover;
+  height: 200px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.main .thumbnail:hover {
+  transform: scaleY(1.05);
+}
+
+/* 3D text effect and animation */
+.info-text {
+  font-size: 1rem;
+  background-color: #615a9e;
+  color: #e2e2e2; /* Darker text color for contrast */
+  height: 50px;
+
+
+  transition: transform 0.3s, text-shadow 0.3s;
+}
+
+.info-text:hover {
+  cursor: pointer;
+  transform: scaleY(1.1); /* 3D rotation */
+}
