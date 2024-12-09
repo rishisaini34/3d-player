@@ -15,7 +15,10 @@ on:
         description: "The Git branch to build from"
         required: true
         default: "main"
-
+      is_to_be_deployed:
+        type: boolean
+        description: "Is this to be deployed right now"
+        default: "true"
 jobs:
   trigger-and-check-jenkins:
     runs-on: ubuntu-latest
@@ -25,6 +28,7 @@ jobs:
 
       - name: Trigger Jenkins Parameterized Job
         id: trigger-jenkins
+        if: ${{ github.event.inputs.is_to_be_deployed == 'true' }}
         run: |
           set -e
           JOB_NAME="3d-player-build-job"
@@ -56,6 +60,7 @@ jobs:
           
       - name: Wait for Build to Start and Fetch Build Number
         id: fetch-build-number
+        if: ${{ github.event.inputs.is_to_be_deployed == 'true' }}
         run: |
           set -e
           JENKINS_URL="http://45.79.122.237:8080"
@@ -84,6 +89,7 @@ jobs:
 
       - name: Check Jenkins Job Status
         id: jenkins-status
+        if: ${{ github.event.inputs.is_to_be_deployed == 'true' }}        
         run: |
           set -e
           JOB_NAME="3d-player-build-job"
@@ -119,12 +125,41 @@ jobs:
           BUILD_TIMESTAMP=$(echo $BUILD_INFO | jq -r '.timestamp')
           BUILD_DATE=$(date -d @"$(($BUILD_TIMESTAMP / 1000))" +'%Y-%m-%d %H:%M:%S')
 
-          echo "Job Status: $STATUS"
-          echo "Build Number: $BUILD_NUMBER"
-          echo "Build Date: $BUILD_DATE"
+      - name: Only Check Jenkins Job Status
+        id: only-jenkins-status
+        if: ${{ github.event.inputs.is_to_be_deployed == 'false' }}        
+        run: |
+          set -e
+          JOB_NAME="3d-player-build-job"
+          JENKINS_URL="http://45.79.122.237:8080"
+          USERNAME="coral"
+          TOKEN="11a6a553d88e61d4bc691f2c8e6c0cad98"
+          BUILD_NUMBER="${{ env.build_number }}"
 
-          # Set outputs
-          echo "status=$STATUS" >> $GITHUB_ENV
-          echo "build_number=$BUILD_NUMBER" >> $GITHUB_ENV
-          echo "build_date=$BUILD_DATE" >> $GITHUB_ENV
+          echo "Checking the status of the Jenkins job..."
+          STATUS="null"
+          for i in {1..60}; do
+            BUILD_INFO=$(curl -s -u $USERNAME:$TOKEN "$JENKINS_URL/job/$JOB_NAME/$BUILD_NUMBER/api/json")
+            STATUS=$(echo $BUILD_INFO | jq -r '.result')
+            if [ "$STATUS" != "null" ]; then
+              break
+            fi
+            echo "Waiting for build to complete... Attempt: $i"
+            sleep 10
+          done
+
+          if [ "$STATUS" == "null" ]; then
+            echo "Failed to fetch the status of the Jenkins job after multiple attempts."
+            exit 1
+          fi
+
+          # Fetch build logs in case of failure
+          if [ "$STATUS" == "FAILURE" ]; then
+            BUILD_LOG=$(curl -s -u $USERNAME:$TOKEN "$JENKINS_URL/job/$JOB_NAME/$BUILD_NUMBER/consoleText" | tail -n 50)
+            echo "Build failed with error log: $BUILD_LOG"
+          fi
+
+          # Convert timestamp to human-readable date
+          BUILD_TIMESTAMP=$(echo $BUILD_INFO | jq -r '.timestamp')
+          BUILD_DATE=$(date -d @"$(($BUILD_TIMESTAMP / 1000))" +'%Y-%m-%d %H:%M:%S')          
 
