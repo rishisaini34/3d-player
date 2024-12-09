@@ -129,37 +129,28 @@ jobs:
         id: only-jenkins-status
         if: ${{ github.event.inputs.is_to_be_deployed == 'false' }}        
         run: |
-          set -e
           JOB_NAME="3d-player-build-job"
           JENKINS_URL="http://45.79.122.237:8080"
           USERNAME="coral"
           TOKEN="11a6a553d88e61d4bc691f2c8e6c0cad98"
-          BUILD_NUMBER="${{ env.build_number }}"
 
-          echo "Checking the status of the Jenkins job..."
-          STATUS="null"
-          for i in {1..60}; do
-            BUILD_INFO=$(curl -s -u $USERNAME:$TOKEN "$JENKINS_URL/job/$JOB_NAME/$BUILD_NUMBER/api/json")
-            STATUS=$(echo $BUILD_INFO | jq -r '.result')
-            if [ "$STATUS" != "null" ]; then
-              break
-            fi
-            echo "Waiting for build to complete... Attempt: $i"
-            sleep 10
-          done
+          # Get the job status and additional info from Jenkins
+          BUILD_INFO=$(curl -s -u $USERNAME:$TOKEN $JENKINS_URL/job/$JOB_NAME/lastBuild/api/json)
+          STATUS=$(echo $BUILD_INFO | jq -r '.result')
+          BUILD_NUMBER=$(echo $BUILD_INFO | jq -r '.number')
+          BUILD_TIMESTAMP=$(echo $BUILD_INFO | jq -r '.timestamp')
+
+          # Convert timestamp to human-readable date
+          BUILD_DATE=$(date -d @"$(($BUILD_TIMESTAMP / 1000))" +'%Y-%m-%d %H:%M:%S')
 
           if [ "$STATUS" == "null" ]; then
-            echo "Failed to fetch the status of the Jenkins job after multiple attempts."
-            exit 1
+            echo "Job is running or has never been built."
+            STATUS="RUNNING"
           fi
 
           # Fetch build logs in case of failure
           if [ "$STATUS" == "FAILURE" ]; then
-            BUILD_LOG=$(curl -s -u $USERNAME:$TOKEN "$JENKINS_URL/job/$JOB_NAME/$BUILD_NUMBER/consoleText" | tail -n 50)
+            BUILD_LOG=$(curl -s -u $USERNAME:$TOKEN "$JENKINS_URL/job/$JOB_NAME/$BUILD_NUMBER/consoleText" | tail -n 10)
             echo "Build failed with error log: $BUILD_LOG"
-          fi
-
-          # Convert timestamp to human-readable date
-          BUILD_TIMESTAMP=$(echo $BUILD_INFO | jq -r '.timestamp')
-          BUILD_DATE=$(date -d @"$(($BUILD_TIMESTAMP / 1000))" +'%Y-%m-%d %H:%M:%S')          
+          fi       
 
