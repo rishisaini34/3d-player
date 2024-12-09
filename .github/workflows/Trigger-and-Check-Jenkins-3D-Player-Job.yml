@@ -152,5 +152,9 @@ jobs:
           if [ "$STATUS" == "FAILURE" ]; then
             BUILD_LOG=$(curl -s -u $USERNAME:$TOKEN "$JENKINS_URL/job/$JOB_NAME/$BUILD_NUMBER/consoleText" | tail -n 10)
             echo "Build failed with error log: $BUILD_LOG"
-          fi       
+          fi
+          
+          echo "Job Status: $STATUS"
+          echo "Build Number: $BUILD_NUMBER"
+          echo "Build Date: $BUILD_DATE"
 
